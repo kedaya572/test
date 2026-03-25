@@ -53,4 +53,8 @@ public class StringUtil {
     public static boolean contains(String str, String searchStr) {
         return str != null && searchStr != null && str.contains(searchStr);
     }
+
+    public static void main(String[] args) {
+        System.out.print(isEmpty("1"));
+    }
 }
