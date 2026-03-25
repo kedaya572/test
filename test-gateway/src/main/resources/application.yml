@@ -1,0 +1,43 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: test-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        namespace: public
+    gateway:
+      discovery:
+        locator:
+          # 开启基于服务名的动态路由（可选，下面已显式配置路由）
+          enabled: false
+      routes:
+        # 认证服务路由（无需鉴权，白名单在 JwtAuthFilter 中维护）
+        - id: auth-service
+          uri: lb://test-auth-service
+          predicates:
+            - Path=/api/auth/**
+        # 学生服务路由
+        - id: student-service
+          uri: lb://test-student-service
+          predicates:
+            - Path=/api/students/**
+      # 全局跨域配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+
+jwt:
+  secret: mySecretKeyForStudentManagementSystem2024
+  expiration: 86400000
+
+logging:
+  level:
+    com.xxx.gateway: debug
