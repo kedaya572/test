@@ -42,7 +42,9 @@ export const studentAPI = {
   get: (id) => api.get(`/students/${id}`),
   create: (data) => api.post('/students', data),
   update: (id, data) => api.put(`/students/${id}`, data),
-  delete: (id) => api.delete(`/students/${id}`)
+  delete: (id) => api.delete(`/students/${id}`),
+  enable: (id) => api.put(`/students/${id}/enable`),
+  disable: (id) => api.put(`/students/${id}/disable`)
 }
 
 export default api
