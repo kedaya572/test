@@ -93,7 +93,12 @@
               <td class="text-muted">{{ s.email || '-' }}</td>
               <td class="text-muted">{{ s.phone || '-' }}</td>
               <td>
+                <span class="status-tag" :class="s.enabled ? 'enabled' : 'disabled'">
+                  {{ s.enabled ? '启用' : '禁用' }}
+                </span>
                 <div class="action-btns">
+                  <button v-if="!s.enabled" class="btn-enable" @click="enableStudent(s.id)">启用</button>
+                  <button v-else class="btn-disable" @click="disableStudent(s.id)">禁用</button>
                   <button class="btn-edit" @click="goEdit(s.id)">编辑</button>
                   <button class="btn-delete" @click="deleteStudent(s.id)">删除</button>
                 </div>
@@ -183,6 +188,25 @@ const deleteStudent = async (id) => {
     loadStudents()
   } catch {
     alert('删除失败')
+  }
+}
+
+const enableStudent = async (id) => {
+  try {
+    await studentAPI.enable(id)
+    loadStudents()
+  } catch {
+    alert('启用失败')
+  }
+}
+
+const disableStudent = async (id) => {
+  if (!confirm('确认禁用该学生？')) return
+  try {
+    await studentAPI.disable(id)
+    loadStudents()
+  } catch {
+    alert('禁用失败')
   }
 }
 
@@ -340,6 +364,29 @@ td {
 }
 .gender-tag.male { background: #eff6ff; color: #3b82f6; }
 .gender-tag.female { background: #fdf2f8; color: #ec4899; }
+
+.status-tag {
+  display: inline-flex; align-items: center;
+  padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+  margin-right: 8px;
+}
+.status-tag.enabled { background: #ecfdf5; color: #059669; }
+.status-tag.disabled { background: #fef2f2; color: #dc2626; }
+
+.btn-enable {
+  padding: 5px 12px; font-size: 12px; font-weight: 500;
+  border: 1.5px solid #059669; color: #059669;
+  background: #fff; border-radius: var(--radius-sm); cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-enable:hover { background: #ecfdf5; }
+.btn-disable {
+  padding: 5px 12px; font-size: 12px; font-weight: 500;
+  border: 1.5px solid #dc2626; color: #dc2626;
+  background: #fff; border-radius: var(--radius-sm); cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-disable:hover { background: #fef2f2; }
 
 .action-btns { display: flex; gap: 8px; }
 .btn-edit {

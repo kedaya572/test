@@ -29,6 +29,9 @@ public class Student {
 
     private String phone;
 
+    /** 是否启用：true-启用，false-禁用 */
+    private Boolean enabled;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 

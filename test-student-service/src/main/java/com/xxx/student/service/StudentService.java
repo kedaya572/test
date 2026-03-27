@@ -48,4 +48,18 @@ public interface StudentService extends IService<Student> {
      * @return 分页结果
      */
     PageResult<Student> pageStudents(String name, String major, int page, int pageSize);
+
+    /**
+     * 启用学生
+     *
+     * @param id 学生 ID
+     */
+    void enableStudent(Long id);
+
+    /**
+     * 禁用学生
+     *
+     * @param id 学生 ID
+     */
+    void disableStudent(Long id);
 }

@@ -67,4 +67,28 @@ public class StudentController {
             @RequestParam(defaultValue = "10") int pageSize) {
         return Result.success(studentService.pageStudents(name, major, page, pageSize));
     }
+
+    /**
+     * 启用学生
+     *
+     * @param id 学生ID
+     * @return 操作结果
+     */
+    @PutMapping("/{id}/enable")
+    public Result<?> enable(@PathVariable Long id) {
+        studentService.enableStudent(id);
+        return Result.success(null);
+    }
+
+    /**
+     * 禁用学生
+     *
+     * @param id 学生ID
+     * @return 操作结果
+     */
+    @PutMapping("/{id}/disable")
+    public Result<?> disable(@PathVariable Long id) {
+        studentService.disableStudent(id);
+        return Result.success(null);
+    }
 }
