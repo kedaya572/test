@@ -130,6 +130,16 @@ public class ClassServiceImpl extends ServiceImpl<ClassMapper, Clazz> implements
     }
 
     @Override
+    public List<Clazz> listClassesByIds(List<Long> ids) {
+        List<Clazz> list = lambdaQuery()
+                .in(Clazz::getId, ids)
+                .orderByDesc(Clazz::getId)
+                .list();
+        log.info("批量查询班级：ids={}, 查询到{}条", ids, list.size());
+        return list;
+    }
+
+    @Override
     public PageResult<Clazz> pageClasses(ClassQueryRequest req) {
         int actualPageSize = Math.min(req.getPageSize(), MAX_PAGE_SIZE);
         if (req.getPageSize() > MAX_PAGE_SIZE) {

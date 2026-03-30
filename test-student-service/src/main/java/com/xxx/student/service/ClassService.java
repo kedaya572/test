@@ -53,6 +53,14 @@ public interface ClassService extends IService<Clazz> {
     void batchDeleteClasses(List<Long> ids);
 
     /**
+     * 根据 ID 集合批量查询班级
+     *
+     * @param ids 班级 ID 列表
+     * @return 班级列表
+     */
+    List<Clazz> listClassesByIds(List<Long> ids);
+
+    /**
      * 分页查询班级列表
      *
      * @param req 查询条件（支持模糊/精确匹配及分页参数）

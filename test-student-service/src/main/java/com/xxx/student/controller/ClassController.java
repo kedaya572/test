@@ -86,6 +86,18 @@ public class ClassController {
     }
 
     /**
+     * 根据ID集合批量查询班级
+     *
+     * @param ids 班级ID列表
+     * @return 班级列表
+     */
+    @PostMapping("/batch-query")
+    public Result<List<Clazz>> batchQuery(@RequestBody @NotEmpty(message = "ID列表不能为空") List<Long> ids) {
+        log.info("批量查询班级：ids={}", ids);
+        return Result.success(classService.listClassesByIds(ids));
+    }
+
+    /**
      * 批量删除班级
      *
      * @param ids 班级ID列表
