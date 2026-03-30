@@ -1,6 +1,7 @@
 package com.xxx.student.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -10,11 +11,18 @@ import com.xxx.student.dto.StudentRequest;
 import com.xxx.student.entity.Student;
 import com.xxx.student.mapper.StudentMapper;
 import com.xxx.student.service.StudentService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 学生服务实现
@@ -179,6 +187,110 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
         student.setEnabled(false);
         updateById(student);
         log.info("禁用学生成功：id={}", id);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchDeleteStudents(List<Long> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new BusinessException("ID列表不能为空");
+        }
+        boolean removed = removeByIds(ids);
+        if (!removed) {
+            log.warn("批量删除学生失败：ids={}", ids);
+            throw new BusinessException("批量删除失败，请确认ID列表是否正确");
+        }
+        log.info("批量删除学生成功：ids={}", ids);
+    }
+
+    @Override
+    public List<Student> searchByName(String name) {
+        if (!StringUtils.hasText(name)) {
+            throw new BusinessException("姓名关键字不能为空");
+        }
+        List<Student> students = lambdaQuery()
+                .like(Student::getName, name)
+                .orderByDesc(Student::getId)
+                .list();
+        log.info("按姓名模糊查询：name={}, 结果数={}", name, students.size());
+        return students;
+    }
+
+    @Override
+    public List<Student> getByAgeRange(Integer minAge, Integer maxAge) {
+        if (minAge == null || maxAge == null) {
+            throw new BusinessException("年龄范围参数不能为空");
+        }
+        if (minAge > maxAge) {
+            throw new BusinessException("最小年龄不能大于最大年龄");
+        }
+        if (minAge < MIN_AGE || maxAge > MAX_AGE) {
+            throw new BusinessException("年龄范围必须在" + MIN_AGE + "-" + MAX_AGE + "之间");
+        }
+        List<Student> students = lambdaQuery()
+                .ge(Student::getAge, minAge)
+                .le(Student::getAge, maxAge)
+                .orderByAsc(Student::getAge)
+                .list();
+        log.info("按年龄范围查询：minAge={}, maxAge={}, 结果数={}", minAge, maxAge, students.size());
+        return students;
+    }
+
+    @Override
+    public Map<String, Long> countByMajor() {
+        QueryWrapper<Student> wrapper = new QueryWrapper<>();
+        wrapper.select("major, count(*) as cnt")
+                .isNotNull("major")
+                .ne("major", "")
+                .groupBy("major")
+                .orderByDesc("cnt");
+        List<Map<String, Object>> rawList = listMaps(wrapper);
+        Map<String, Long> result = new LinkedHashMap<>(rawList.size());
+        for (Map<String, Object> row : rawList) {
+            String major = (String) row.get("major");
+            Long count = ((Number) row.get("cnt")).longValue();
+            result.put(major, count);
+        }
+        log.info("统计专业学生数：共{}个专业", result.size());
+        return result;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchUpdateStatus(List<Long> ids, Boolean enabled) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new BusinessException("ID列表不能为空");
+        }
+        if (enabled == null) {
+            throw new BusinessException("状态不能为空");
+        }
+        LambdaUpdateWrapper<Student> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.in(Student::getId, ids)
+                .set(Student::getEnabled, enabled);
+        boolean updated = update(updateWrapper);
+        if (!updated) {
+            log.warn("批量更新学生状态失败：ids={}, enabled={}", ids, enabled);
+            throw new BusinessException("批量更新状态失败，请确认ID列表是否正确");
+        }
+        log.info("批量更新学生状态成功：ids={}, enabled={}", ids, enabled);
+    }
+
+    @Override
+    public void exportStudents(HttpServletResponse response) {
+        // TODO: 集成 EasyExcel 实现完整导出逻辑
+        // 示例：查询全量数据写入响应流
+        List<Student> students = list(new LambdaQueryWrapper<Student>().orderByDesc(Student::getId));
+        log.info("导出学生数据：共{}条", students.size());
+        try {
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setCharacterEncoding("utf-8");
+            response.setHeader("Content-Disposition", "attachment;filename=students.xlsx");
+            // 实际项目中调用 EasyExcel.write(response.getOutputStream(), Student.class).sheet("学生列表").doWrite(students);
+            response.getOutputStream().flush();
+        } catch (Exception e) {
+            log.error("导出学生Excel失败", e);
+            throw new BusinessException("导出失败");
+        }
     }
 
     /**

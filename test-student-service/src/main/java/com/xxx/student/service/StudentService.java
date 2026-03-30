@@ -4,6 +4,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.xxx.common.result.PageResult;
 import com.xxx.student.dto.StudentRequest;
 import com.xxx.student.entity.Student;
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * 学生服务接口
@@ -62,4 +66,50 @@ public interface StudentService extends IService<Student> {
      * @param id 学生 ID
      */
     void disableStudent(Long id);
+
+    /**
+     * 批量删除学生（逻辑删除）
+     *
+     * @param ids 学生 ID 列表
+     */
+    void batchDeleteStudents(List<Long> ids);
+
+    /**
+     * 按姓名模糊查询学生列表
+     *
+     * @param name 姓名关键字
+     * @return 学生列表
+     */
+    List<Student> searchByName(String name);
+
+    /**
+     * 按年龄范围查询学生列表
+     *
+     * @param minAge 最小年龄（含）
+     * @param maxAge 最大年龄（含）
+     * @return 学生列表
+     */
+    List<Student> getByAgeRange(Integer minAge, Integer maxAge);
+
+    /**
+     * 统计各专业学生人数
+     *
+     * @return key=专业名称，value=学生人数
+     */
+    Map<String, Long> countByMajor();
+
+    /**
+     * 批量更新学生状态
+     *
+     * @param ids     学生 ID 列表
+     * @param enabled 目标状态
+     */
+    void batchUpdateStatus(List<Long> ids, Boolean enabled);
+
+    /**
+     * 导出学生数据到 Excel
+     *
+     * @param response HTTP 响应
+     */
+    void exportStudents(HttpServletResponse response);
 }
