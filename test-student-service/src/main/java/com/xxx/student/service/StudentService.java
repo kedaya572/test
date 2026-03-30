@@ -2,7 +2,9 @@ package com.xxx.student.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.xxx.common.result.PageResult;
+import com.xxx.student.dto.StudentQueryRequest;
 import com.xxx.student.dto.StudentRequest;
+import com.xxx.student.dto.StudentStatusVO;
 import com.xxx.student.entity.Student;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -107,9 +109,32 @@ public interface StudentService extends IService<Student> {
     void batchUpdateStatus(List<Long> ids, Boolean enabled);
 
     /**
+     * 根据查询条件分页查询学生列表
+     *
+     * @param req 查询条件（支持模糊/精确匹配及分页参数）
+     * @return 分页结果
+     */
+    PageResult<Student> pageStudentsByRequest(StudentQueryRequest req);
+
+    /**
      * 导出学生数据到 Excel
      *
      * @param response HTTP 响应
      */
     void exportStudents(HttpServletResponse response);
+
+    /**
+     * 查询单个学生的启用状态
+     *
+     * @param id 学生 ID
+     * @return 学生状态 VO
+     */
+    StudentStatusVO getStudentStatus(Long id);
+
+    /**
+     * 查询学生状态统计汇总
+     *
+     * @return 包含 total / enabled / disabled 数量的 Map
+     */
+    Map<String, Long> getStatusSummary();
 }

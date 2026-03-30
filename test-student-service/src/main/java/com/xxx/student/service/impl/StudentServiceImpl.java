@@ -7,7 +7,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xxx.common.exception.BusinessException;
 import com.xxx.common.result.PageResult;
+import com.xxx.student.dto.StudentQueryRequest;
 import com.xxx.student.dto.StudentRequest;
+import com.xxx.student.dto.StudentStatusVO;
 import com.xxx.student.entity.Student;
 import com.xxx.student.mapper.StudentMapper;
 import com.xxx.student.service.StudentService;
@@ -164,6 +166,29 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
     }
 
     @Override
+    public PageResult<Student> pageStudentsByRequest(StudentQueryRequest req) {
+        int actualPageSize = Math.min(req.getPageSize(), MAX_PAGE_SIZE);
+        if (req.getPageSize() > MAX_PAGE_SIZE) {
+            log.info("pageSize[{}]超过上限，已限制为{}", req.getPageSize(), MAX_PAGE_SIZE);
+        }
+
+        LambdaQueryWrapper<Student> wrapper = new LambdaQueryWrapper<Student>()
+                .like(StringUtils.hasText(req.getName()), Student::getName, req.getName())
+                .like(StringUtils.hasText(req.getStudentNo()), Student::getStudentNo, req.getStudentNo())
+                .like(StringUtils.hasText(req.getMajor()), Student::getMajor, req.getMajor())
+                .like(StringUtils.hasText(req.getEmail()), Student::getEmail, req.getEmail())
+                .like(StringUtils.hasText(req.getPhone()), Student::getPhone, req.getPhone())
+                .eq(StringUtils.hasText(req.getGender()), Student::getGender, req.getGender())
+                .eq(req.getAge() != null, Student::getAge, req.getAge())
+                .eq(req.getEnabled() != null, Student::getEnabled, req.getEnabled())
+                .orderByDesc(Student::getId);
+
+        Page<Student> result = page(new Page<>(req.getPage(), actualPageSize), wrapper);
+        log.info("分页查询学生列表：page={}, pageSize={}, total={}", req.getPage(), actualPageSize, result.getTotal());
+        return new PageResult<>(result.getTotal(), req.getPage(), actualPageSize, result.getRecords());
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void enableStudent(Long id) {
         Student student = getById(id);
@@ -291,6 +316,36 @@ public class StudentServiceImpl extends ServiceImpl<StudentMapper, Student> impl
             log.error("导出学生Excel失败", e);
             throw new BusinessException("导出失败");
         }
+    }
+
+    @Override
+    public StudentStatusVO getStudentStatus(Long id) {
+        Student student = getById(id);
+        if (student == null) {
+            log.warn("查询学生状态失败：学生[id={}]不存在", id);
+            throw new BusinessException("学生不存在");
+        }
+        StudentStatusVO vo = new StudentStatusVO();
+        vo.setId(student.getId());
+        vo.setName(student.getName());
+        vo.setStudentNo(student.getStudentNo());
+        vo.setEnabled(student.getEnabled());
+        vo.setUpdatedAt(student.getUpdatedAt());
+        log.info("查询学生状态：id={}, enabled={}", id, student.getEnabled());
+        return vo;
+    }
+
+    @Override
+    public Map<String, Long> getStatusSummary() {
+        long total = count();
+        long enabledCount = count(new LambdaQueryWrapper<Student>().eq(Student::getEnabled, Boolean.TRUE));
+        long disabledCount = total - enabledCount;
+        Map<String, Long> summary = new LinkedHashMap<>(4);
+        summary.put("total", total);
+        summary.put("enabled", enabledCount);
+        summary.put("disabled", disabledCount);
+        log.info("查询学生状态统计：total={}, enabled={}, disabled={}", total, enabledCount, disabledCount);
+        return summary;
     }
 
     /**

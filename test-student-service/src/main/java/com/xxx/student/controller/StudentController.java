@@ -3,7 +3,9 @@ package com.xxx.student.controller;
 import com.xxx.common.result.PageResult;
 import com.xxx.common.result.Result;
 import com.xxx.student.dto.BatchStatusRequest;
+import com.xxx.student.dto.StudentQueryRequest;
 import com.xxx.student.dto.StudentRequest;
+import com.xxx.student.dto.StudentStatusVO;
 import com.xxx.student.entity.Student;
 import com.xxx.student.service.StudentService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -67,15 +69,14 @@ public class StudentController {
     }
 
     /**
-     * 分页查询学生列表
+     * 分页查询学生列表（支持多字段模糊/精确查询）
+     *
+     * <p>模糊匹配：name、studentNo、major、email、phone；精确匹配：gender、age、enabled</p>
      */
-    @GetMapping
-    public Result<PageResult<Student>> list(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String major,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int pageSize) {
-        return Result.success(studentService.pageStudents(name, major, page, pageSize));
+    @PostMapping("/list")
+    public Result<PageResult<Student>> list(@RequestBody StudentQueryRequest req) {
+        log.info("分页查询学生列表：req={}", req);
+        return Result.success(studentService.pageStudentsByRequest(req));
     }
 
     /**
@@ -175,5 +176,28 @@ public class StudentController {
     public void exportStudents(HttpServletResponse response) {
         log.info("导出学生Excel");
         studentService.exportStudents(response);
+    }
+
+    /**
+     * 查询单个学生的启用状态
+     *
+     * @param id 学生 ID
+     * @return 学生状态信息（id、姓名、学号、启用状态、最近更新时间）
+     */
+    @GetMapping("/{id}/status")
+    public Result<StudentStatusVO> getStatus(@PathVariable Long id) {
+        log.info("查询学生状态：id={}", id);
+        return Result.success(studentService.getStudentStatus(id));
+    }
+
+    /**
+     * 查询全量学生状态统计汇总
+     *
+     * @return 包含 total/enabled/disabled 数量的统计结果
+     */
+    @GetMapping("/status-summary")
+    public Result<Map<String, Long>> getStatusSummary() {
+        log.info("查询学生状态统计汇总");
+        return Result.success(studentService.getStatusSummary());
     }
 }
