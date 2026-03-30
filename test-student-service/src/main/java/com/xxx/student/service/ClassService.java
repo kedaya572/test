@@ -6,6 +6,8 @@ import com.xxx.student.dto.ClassQueryRequest;
 import com.xxx.student.dto.ClassRequest;
 import com.xxx.student.entity.Clazz;
 
+import java.util.List;
+
 /**
  * 班级服务接口
  *
@@ -42,6 +44,13 @@ public interface ClassService extends IService<Clazz> {
      * @return 班级信息
      */
     Clazz getClass(Long id);
+
+    /**
+     * 批量删除班级（逻辑删除）
+     *
+     * @param ids 班级 ID 列表
+     */
+    void batchDeleteClasses(List<Long> ids);
 
     /**
      * 分页查询班级列表

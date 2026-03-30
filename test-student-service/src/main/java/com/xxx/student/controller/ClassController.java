@@ -7,10 +7,13 @@ import com.xxx.student.dto.ClassRequest;
 import com.xxx.student.entity.Clazz;
 import com.xxx.student.service.ClassService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 班级管理接口
@@ -79,6 +82,19 @@ public class ClassController {
     @DeleteMapping("/{id}")
     public Result<?> delete(@PathVariable Long id) {
         classService.deleteClass(id);
+        return Result.success(null);
+    }
+
+    /**
+     * 批量删除班级
+     *
+     * @param ids 班级ID列表
+     * @return 操作结果
+     */
+    @DeleteMapping("/batch")
+    public Result<?> batchDelete(@RequestBody @NotEmpty(message = "ID列表不能为空") List<Long> ids) {
+        log.info("批量删除班级：ids={}", ids);
+        classService.batchDeleteClasses(ids);
         return Result.success(null);
     }
 }

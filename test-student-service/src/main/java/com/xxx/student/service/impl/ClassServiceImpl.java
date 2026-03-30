@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
+
 /**
  * 班级服务实现
  *
@@ -103,6 +105,18 @@ public class ClassServiceImpl extends ServiceImpl<ClassMapper, Clazz> implements
             throw new BusinessException("班级不存在");
         }
         log.info("删除班级成功：id={}", id);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchDeleteClasses(List<Long> ids) {
+        long existCount = lambdaQuery().in(Clazz::getId, ids).count();
+        if (existCount == 0) {
+            log.warn("批量删除班级失败：ids={}，班级均不存在", ids);
+            throw new BusinessException("班级不存在");
+        }
+        removeByIds(ids);
+        log.info("批量删除班级成功：ids={}, 共删除{}条", ids, existCount);
     }
 
     @Override
